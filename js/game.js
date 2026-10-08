@@ -108,6 +108,15 @@
   addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat) toggleBgm(); });
   showBgm(); playBgm();
 
+  // 레벨 업 효과음. 음소거 중에는 함께 꺼진다
+  const levelSfx = new Audio('level.mp3');
+  levelSfx.preload = 'auto'; levelSfx.volume = .8;
+  function playLevelSfx() {
+    if (bgmState.off) return;
+    levelSfx.currentTime = 0;
+    levelSfx.play().catch(() => { /* 무시 */ });
+  }
+
   cv.addEventListener('pointerdown', e => {
     if (modal) return;
     const r = cv.getBoundingClientRect();
@@ -120,6 +129,30 @@
     $('stage').style.transform = `translate(-50%,-50%) scale(${s})`;
   }
   addEventListener('resize', fit); fit();
+
+  // 타격 효과음. 연타해도 소리가 잘리지 않게 여러 개를 돌려 쓴다
+  const punchPool = Array.from({ length: 4 }, () => { const a = new Audio('punch.mp3'); a.preload = 'auto'; a.volume = .7; return a; });
+  let punchIdx = 0, punchAt = 0;
+  function playPunchSfx() {
+    const now = performance.now();
+    if (bgmState.off || now - punchAt < 40) return;   // 스킬로 여럿을 한 번에 때려도 한 번만 울린다
+    punchAt = now;
+    const a = punchPool[punchIdx++ % punchPool.length];
+    a.currentTime = 0;
+    a.play().catch(() => { /* 무시 */ });
+  }
+
+  // 처치 효과음. 스킬로 여럿이 동시에 쓰러져도 한 번만 울린다
+  const killPool = Array.from({ length: 3 }, () => { const a = new Audio('kill.mp3'); a.preload = 'auto'; a.volume = .75; return a; });
+  let killIdx = 0, killAt = 0;
+  function playKillSfx() {
+    const now = performance.now();
+    if (bgmState.off || now - killAt < 40) return;
+    killAt = now;
+    const a = killPool[killIdx++ % killPool.length];
+    a.currentTime = 0;
+    a.play().catch(() => { /* 무시 */ });
+  }
 
   // ───────── 로그 / HUD ─────────
   function addChat(cls, html) {
@@ -293,6 +326,7 @@
   function hit(m, mult) {
     const crit = Math.random() < .2;
     const d = Math.round(atkBase() * mult * rand(.85, 1.15) * (crit ? 1.5 : 1));
+    playPunchSfx();
     m.hp -= d; m.hitT = .25; m.kb = player.face * 240; m.aggro = 6;
     fx.push({ type: 'num', x: m.x + rand(-10, 10), y: m.y - 100, text: d, crit, t: 0, life: .9 });
     if (m.hp <= 0) kill(m);
@@ -301,6 +335,7 @@
   function kill(m) {
     const before = lvl();
     m.dieT = .5; m.hp = 0;
+    playKillSfx();
     save.kills++; huntKills++;
     addLoot('경험치를 얻었습니다 (+1)');
     items.push({ t: m.t, x: m.x, y: m.y - 40, vy: -560, base: m.y, age: 0 });
@@ -312,6 +347,7 @@
   function levelUp() {
     const p = player, L = lvl();
     p.lvT = 1.8; p.hp = hpMax(); p.mp = mpMax();
+    playLevelSfx();
     addChat('notice', `[레벨 업] <b>Lv.${L}</b> 달성! ${L >= MAX_LV ? '최고 레벨에 도달했습니다. 당신이 바로 석유왕!' : ''}`);
     if (L >= MAX_LV) toast('<b>Lv.500</b> 달성! 당신이 바로 석유왕!');
   }
