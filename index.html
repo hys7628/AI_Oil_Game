@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>오일스토리 - 정유·석유화학 용어 사냥</title>
+  <meta name="description" content="몬스터를 잡으며 배우는 정유·석유화학 산업 용어 RPG">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <!-- 미니맵 -->
+    <div id="minimap">
+      <div class="mm-head"><span>MINI MAP</span><b>WORLD</b></div>
+      <div class="mm-name"><i id="mapicon"></i><div><b id="mapname"></b><span id="mapsub"></span></div></div>
+      <canvas id="mini" width="214" height="74"></canvas>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- 채팅 로그 -->
+    <div id="chat">
+      <div class="chat-tabs"><b>전체</b><span>공지</span><span>오일이</span><span>복습</span></div>
+      <div id="chatlog"></div>
+    </div>
+
+    <!-- 사냥 통계 -->
+    <div id="hunt">
+      <div>EXP : <b id="hExp"></b></div>
+      <div>사냥 시간 : <b id="hTime"></b></div>
+      <div>처치 몬스터 : <b id="hKill"></b></div>
+      <div>수집 두루마리 : <b id="hSeen"></b></div>
+    </div>
+
+    <!-- 획득 로그 -->
+    <div id="loot"></div>
+
+    <!-- 퀵슬롯 -->
+    <div id="quick">
+      <button data-key="atk"><i>🔧</i><kbd>Z</kbd><span>공격</span></button>
+      <button data-key="skill"><i>💥</i><kbd>X</kbd><span>스킬</span></button>
+      <button data-key="jump"><i>⤴</i><kbd>Space</kbd><span>점프</span></button>
+      <button data-key="up"><i>💬</i><kbd>↑</kbd><span>대화</span></button>
+      <button id="qCodex"><i>📜</i><kbd>I</kbd><span>도감</span></button>
+      <button id="qHelp"><i>❓</i><kbd>H</kbd><span>도움말</span></button>
+    </div>
+
+    <!-- 모바일 터치 조작 -->
+    <div id="touch">
+      <button class="tbtn" data-key="left" style="left:24px;bottom:70px">◀</button>
+      <button class="tbtn" data-key="right" style="left:150px;bottom:70px">▶</button>
+      <button class="tbtn small" data-key="down" style="left:98px;bottom:190px">▼</button>
+      <button class="tbtn small" data-key="up" style="right:280px;bottom:70px">▲<small>대화</small></button>
+      <button class="tbtn small" data-key="skill" style="right:170px;bottom:180px">스킬</button>
+      <button class="tbtn" data-key="atk" style="right:150px;bottom:62px">공격</button>
+      <button class="tbtn" data-key="jump" style="right:24px;bottom:120px">점프</button>
+      <button class="tbtn mini" id="tCodex" style="right:20px;top:16px">📜</button>
+      <button class="tbtn mini" id="tHelp" style="right:92px;top:16px">❓</button>
+    </div>
+
+    <!-- 하단 상태바 -->
+    <div id="statusbar">
+      <div class="lv"><span>LV.</span><b id="lv"></b></div>
+      <div class="who"><span id="job"></span><b>신입사원</b></div>
+      <div class="gauge hp"><label>HP <em id="hptxt"></em></label><div><i id="hpbar"></i></div></div>
+      <div class="gauge mp"><label>MP <em id="mptxt"></em></label><div><i id="mpbar"></i></div></div>
+      <div class="gauge exp"><label>EXP <em id="exptxt"></em></label><div><i id="expbar"></i></div></div>
+      <button id="btnCodex">도감</button>
+      <button id="btnHelp">도움말</button>
+    </div>
+
+    <div id="dim" class="hidden"></div>
+
+    <!-- 비밀의 두루마리 -->
+    <div id="scroll" class="hidden">
+      <div class="roller"></div>
+      <div class="paper">
+        <div class="badge" id="scBadge">비밀의 두루마리</div>
+        <div class="cat" id="scCat"></div>
+        <h2 id="scName"></h2>
+        <div class="en" id="scEn"></div>
+        <p class="short" id="scShort"></p>
+        <p class="desc" id="scDesc"></p>
+        <div class="tip"><b>실무 TIP</b><span id="scTip"></span></div>
+        <button id="scOk">확인 <kbd>Enter</kbd></button>
+      </div>
+      <div class="roller"></div>
+    </div>
+
+    <!-- NPC 대화창 -->
+    <div id="dialog" class="hidden">
+      <div class="portrait"><img src="oil.jpg" alt="오일이"><span>오일이</span></div>
+      <div class="body">
+        <p id="dlgText"></p>
+        <div class="dlgbtns">
+          <button id="dlgEnd">대화 종료</button>
+          <button id="dlgNext">다음 <kbd>Enter</kbd></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 용어 도감 -->
+    <div id="codex" class="win hidden">
+      <div class="title"><span>용어 도감</span><b id="cxCount"></b><button id="cxClose">✕</button></div>
+      <div class="tabs" id="cxTabs"></div>
+      <div class="grid" id="cxGrid"></div>
+      <div class="foot"><span>몬스터를 잡고 두루마리를 주우면 도감에 기록됩니다. 기록된 칸을 누르면 다시 읽을 수 있어요.</span><button id="cxReset">처음부터 다시</button></div>
+    </div>
+  </div>
+
+  <div id="rotate">📱 화면을 가로로 돌려주세요</div>
+
+  <script src="js/terms.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
