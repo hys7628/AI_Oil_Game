@@ -73,6 +73,41 @@
   ['btnHelp', 'qHelp', 'tHelp'].forEach(id => $(id).addEventListener('click', () => { if (!modal) openHelp(); }));
   addEventListener('contextmenu', e => e.preventDefault());
 
+  // ───────── 배경음악 ─────────
+  // 오디오는 페이지에 하나만 두고 맵 이동·창 열기와 무관하게 계속 재생한다.
+  // 재생 위치를 저장해 두어 새로고침하거나 다시 접속해도 이어서 나온다.
+  const bgm = $('bgm'), BGM_KEY = 'oilstory-bgm-v1';
+  let bgmState = { t: 0, off: false };
+  try { Object.assign(bgmState, JSON.parse(localStorage.getItem(BGM_KEY)) || {}); } catch (e) { /* 무시 */ }
+  bgm.volume = .45;
+  const saveBgm = () => {
+    if (!bgm.paused || bgm.currentTime > 0) bgmState.t = bgm.currentTime;
+    try { localStorage.setItem(BGM_KEY, JSON.stringify(bgmState)); } catch (e) { /* 무시 */ }
+  };
+  const showBgm = () => document.querySelectorAll('.bgm').forEach(b => { b.textContent = bgmState.off ? '🔇' : '🔊'; b.classList.toggle('off', bgmState.off); });
+  let bgmSeeked = false;
+  function playBgm() {
+    if (bgmState.off || !bgm.paused) return;
+    if (!bgmSeeked && bgm.readyState >= 1) {
+      bgmSeeked = true;
+      if (bgmState.t > 0 && bgmState.t < (bgm.duration || Infinity)) bgm.currentTime = bgmState.t;
+    }
+    bgm.play().catch(() => { /* 브라우저가 막으면 다음 입력 때 다시 시도 */ });
+  }
+  function toggleBgm() {
+    bgmState.off = !bgmState.off;
+    if (bgmState.off) bgm.pause(); else playBgm();
+    showBgm(); saveBgm();
+  }
+  // 브라우저 정책상 소리는 첫 입력 뒤에야 낼 수 있어, 입력마다 재생을 시도한다
+  ['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, playBgm));
+  bgm.addEventListener('loadedmetadata', playBgm);
+  setInterval(saveBgm, 1000);
+  addEventListener('pagehide', saveBgm);
+  ['btnBgm', 'tBgm'].forEach(id => $(id).addEventListener('click', e => { e.stopPropagation(); toggleBgm(); }));
+  addEventListener('keydown', e => { if (e.code === 'KeyM' && !e.repeat) toggleBgm(); });
+  showBgm(); playBgm();
+
   cv.addEventListener('pointerdown', e => {
     if (modal) return;
     const r = cv.getBoundingClientRect();
@@ -735,14 +770,22 @@
 
   enterMap(save.map, false);
   addChat('notice', `[공지] 몬스터 ${KILLS_PER_LV}마리를 잡을 때마다 레벨이 1 오릅니다. 최대 레벨은 ${MAX_LV}!`);
-  if (!save.met) {
-    save.met = true; persist();
-    openDialog([
-      '안녕, 신입사원! 난 <b>오일이</b>야. 정유·석유화학 용어가 너무 낯설지? 걱정 마, 여기선 <b>사냥하면서</b> 배울 수 있어!',
-      '몬스터 몸에는 <b>산업 용어</b>가 적혀 있어. 잡으면 <b>비밀의 두루마리</b>가 떨어지고, 주우면 용어 설명이 펼쳐져.',
-      CONTROLS,
-      `몬스터 <b>${KILLS_PER_LV}마리</b>마다 <b>1레벨</b>! 최대 <b>Lv.${MAX_LV}</b>까지 올릴 수 있어. 궁금한 게 생기면 언제든 나한테 말을 걸어줘!`
-    ]);
+  // 시작 화면: Game Start를 누르기 전까지 게임은 멈춰 있다
+  function startGame() {
+    $('title').classList.add('hidden');
+    setModal(null);
+    playBgm();
+    if (!save.met) {
+      save.met = true; persist();
+      openDialog([
+        '안녕, 신입사원! 난 <b>오일이</b>야. 정유·석유화학 용어가 너무 낯설지? 걱정 마, 여기선 <b>사냥하면서</b> 배울 수 있어!',
+        '몬스터 몸에는 <b>산업 용어</b>가 적혀 있어. 잡으면 <b>비밀의 두루마리</b>가 떨어지고, 주우면 용어 설명이 펼쳐져.',
+        CONTROLS,
+        `몬스터 <b>${KILLS_PER_LV}마리</b>마다 <b>1레벨</b>! 최대 <b>Lv.${MAX_LV}</b>까지 올릴 수 있어. 궁금한 게 생기면 언제든 나한테 말을 걸어줘!`
+      ]);
+    }
   }
+  setModal({ ok: startGame });
+  $('btnStart').addEventListener('click', startGame);
   requestAnimationFrame(frame);
 })();

@@ -61,6 +61,7 @@
       <button class="tbtn" data-key="jump" style="right:24px;bottom:120px">점프</button>
       <button class="tbtn mini" id="tCodex" style="right:20px;top:16px">📜</button>
       <button class="tbtn mini" id="tHelp" style="right:92px;top:16px">❓</button>
+      <button class="tbtn mini bgm" id="tBgm" style="right:164px;top:16px">🔊</button>
     </div>
 
     <!-- 하단 상태바 -->
@@ -72,6 +73,7 @@
       <div class="gauge exp"><label>EXP <em id="exptxt"></em></label><div><i id="expbar"></i></div></div>
       <button id="btnCodex">도감</button>
       <button id="btnHelp">도움말</button>
+      <button id="btnBgm" class="bgm" title="배경음악 켜기/끄기 (M)">🔊</button>
     </div>
 
     <div id="dim" class="hidden"></div>
@@ -111,7 +113,16 @@
       <div class="grid" id="cxGrid"></div>
       <div class="foot"><span>몬스터를 잡고 두루마리를 주우면 도감에 기록됩니다. 기록된 칸을 누르면 다시 읽을 수 있어요.</span><button id="cxReset">처음부터 다시</button></div>
     </div>
+
+    <!-- 시작 화면 -->
+    <div id="title">
+      <img src="oil.jpg" alt="오일이">
+      <h1>Let's Oil</h1>
+      <button id="btnStart">Game Start</button>
+    </div>
   </div>
+
+  <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
 
   <div id="rotate">📱 화면을 가로로 돌려주세요</div>
 
